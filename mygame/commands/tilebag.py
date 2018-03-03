@@ -6,6 +6,7 @@ from typeclasses.tilebag import TileBag
 from evennia.utils import search
 from evennia import Command
 from evennia import DefaultObject
+from typeclasses.accounts import Account
 
 class CmdStart(Command):
     """
@@ -24,10 +25,10 @@ class CmdStart(Command):
     def func(self):
         "implements the actual functionality"
         bag = create_object("typeclasses.tilebag.TileBag", key="bag1")
-        self.msg("New bag created!")
-        self.msg("Bag size: "+str(bag.check_bag_size()))
-        self.msg(bag)
-        self.msg(bag.db.tilestring)
+        for acc in Account.objects.all():
+            acc.msg("New bag created by "+self.caller.key+"!")
+            # acc.msg("Bag size: "+str(bag.check_bag_size()))
+            # acc.msg(bag.db.tilestring)
         return bag
 
 class CmdCheck(Command):
@@ -46,6 +47,38 @@ class CmdCheck(Command):
 
     def func(self):
         "implements the actual functionality"
+        bag_obj = search.objects('bag1')
+        if not bag_obj:
+            self.caller.msg("(Only you can see this)")
+            self.caller.msg("No tile bags exist. Create a bag using <start>")
+        else:
+            self.caller.msg("(Only you can see this)")
+            self.caller.msg("Number of tiles left is: "+str(bag_obj[0].check_bag_size()))
+
+class CmdCheckBags(Command):
+    """
+    Check number of bags
+
+    Usage:
+        checkbags
+
+    Checks the number of tile bags in the room. Ideally there should 
+    only be one bag in the room
+    """
+    key = "checkbags"
+    lock = "cmd:all()"
+    aliases = ["<checkbags>", "checkbag", "<checkbag>"]
+    help_category = "General"
+
+    def func(self):
+        "implements the actual functionality"
+        bag_obj = search.objects('bag1')
+        if not bag_obj:
+            self.caller.msg("(Only you can see this)")
+            self.caller.msg("No tile bags exist. Create a bag using <start>")
+        else:
+            self.caller.msg("(Only you can see this)")
+            self.caller.msg("Number of bags is: "+str(len(bag_obj)))
 
 class CmdDelete(Command):
     """
@@ -65,11 +98,13 @@ class CmdDelete(Command):
         "implements the actual functionality"
         bag_obj = search.objects('bag1')
         if not bag_obj:
+            self.caller.msg("(Only you can see this)")
             self.caller.msg("No tile bags exist. Create a bag using <start>")
         else:
             bag_obj[len(bag_obj)-1].delete()
-            self.caller.msg("A tile bag was just killed because of your whims.")
-            self.caller.msg("Number of bags left: "+str(len(bag_obj)-1))
+            for acc in Account.objects.all():
+                acc.msg("A tile bag was just killed because of "+self.caller.key+"'s whims.")
+                acc.msg("Number of bags left: "+str(len(bag_obj)-1))
 
 
 class CmdDraw(Command):
@@ -92,46 +127,59 @@ class CmdDraw(Command):
         "implements the actual functionality"
         bag_obj = search.objects('bag1')
         if not bag_obj:
+            self.caller.msg("(Only you can see this)")
             self.caller.msg("No tile bags exist. Create a bag using <start>")
         else:
             bag = bag_obj[0]
             num = self.args.strip()
             valid0 = len(num)
             if valid0 == 0:
+                self.caller.msg("(Only you can see this)")
                 self.caller.msg("Enter the number of tiles to be drawn along with the command")
                 return
             valid1 = num.isdigit()
             if not valid1:
+                self.caller.msg("(Only you can see this)")
                 self.caller.msg("Enter a valid integer")
                 return
             valid2 = int(num) <= 7 and int(num) >= 1
             if bag.check_bag_size() == 0:
-                self.msg("Game over. The tile bag is now empty. Create a new bag using <start>")
+                for acc in Account.objects.all():
+                    acc.msg("Game over. The tile bag is now empty. Create a new bag using <start>")
+                bag.delete()
+                return
             if not valid2:
+                self.caller.msg("(Only you can see this)")
                 self.caller.msg("Enter a valid integer in the range [1,7]")
                 return
             valid3 = int(num) <= bag.check_bag_size()
             if not valid3:
-                self.msg("Not enough tiles left, number of tiles left is :"+str(bag.check_bag_size()))
+                self.caller.msg("(Only you can see this)")
+                self.msg("Not enough tiles left, number of tiles left is: "+str(bag.check_bag_size()))
                 return
-            self.msg("Tiles removed are: " + ' '.join(bag.remove_tiles(int(num))))
-            self.msg(str(bag.check_bag_size())+" tiles left")
-
-class CmdReset(Command):
+            removed = ' '.join(bag.remove_tiles(int(num)))
+            bag.db.centre = str(bag.db.centre) + " " + removed # DB Centre reminds me of Nishit
+            for acc in Account.objects.all():
+                acc.msg("Tile(s) removed by "+self.caller.key+" are: " + removed)
+                # acc.msg(str(bag.check_bag_size())+" tiles left")
+                acc.msg("Tile(s) in the centre are: " + bag.db.centre)
+            
+class make(Command):
     """
-    Reset tile bag
+    Make words
 
     Usage:
-        reset
+        make <word>
 
-    Resets the tiles in the tile bag to the initial default set
+    The user can choose letters from the Centre and make a word if 
+    it is allowed by CSW15. The letters are then removed and added
+    to the person's collection.
     """
-    key = "reset"
-    aliases = ["restart", "<reset>", "<restart>"]
+    key = "make"
+    aliases = ["<make>"]
     lock = "cmd:all()"
     help_category = "General"
 
     def func(self):
         "implements the actual functionality"
-        self.msg("inside reset command")
-        pass
+        

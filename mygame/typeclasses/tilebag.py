@@ -11,6 +11,7 @@ class TileBag(Object):
         """
         Called when object is first created
         """
+        self.db.centre = ""
         self.db.bagsize = 100
         self.db.tiledict = {'A' : 9,
         'B' : 2,

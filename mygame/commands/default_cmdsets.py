@@ -15,7 +15,7 @@ own cmdsets by inheriting from them or directly from `evennia.CmdSet`.
 """
 
 from evennia import default_cmds
-from commands.tilebag import CmdDraw, CmdReset, CmdStart, CmdCheck, CmdDelete
+from commands.tilebag import CmdDraw, CmdStart, CmdCheck, CmdDelete, CmdCheckBags
 
 
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
@@ -36,9 +36,9 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         #
         self.add(CmdDraw())
         self.add(CmdStart())
-        self.add(CmdReset())
         self.add(CmdCheck())
         self.add(CmdDelete())
+        self.add(CmdCheckBags())
 
 
 class AccountCmdSet(default_cmds.AccountCmdSet):

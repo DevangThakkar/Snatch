@@ -20,14 +20,23 @@ from evennia import utils
 
 CONNECTION_SCREEN = """
 |b==============================================================|n
- Welcome to |g{}|n, version {}!
+ Welcome to |gSNATCH|n by Devang Thakkar!
 
  If you have an existing account, connect to it by typing:
       |wconnect <username> <password>|n
  If you need to create an account, type (without the <>'s):
       |wcreate <username> <password>|n
 
- If you have spaces in your username, enclose it in quotes.
- Enter |whelp|n for more info. |wlook|n will re-show this screen.
-|b==============================================================|n""" \
-    .format(settings.SERVERNAME, utils.get_evennia_version())
+Usage:
+|wstart|n - create a new game with a fresh set of tiles 
+|wdraw <num>|n - draw <num> number of tiles, where num is [1-7]
+|wdelete|n - delete a bag from the game
+|wcheck*|n - check number of tiles left in the bag
+|wcheckbags*|n - check number of bags in the game
+
+It is possible that multiple bags are created if more than one
+|wstart|n commands have been issued. You may choose to keep the
+bags or delete them - it doesn't really matter.
+
+Note: Commands marked with an asterisk show output only to you.
+|b==============================================================|n"""
