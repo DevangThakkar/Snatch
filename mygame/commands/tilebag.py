@@ -180,6 +180,11 @@ class make(Command):
     lock = "cmd:all()"
     help_category = "General"
 
-    def func(self):
+    def func(self, word):
         "implements the actual functionality"
-        
+        if word.lower() not in search.objects('bag1')[0].db.csw15:
+            for acc in Account.objects.all():
+                acc.msg(self.caller.key + " attempted "+ word.upper() + " - which is not a word.")
+        else:
+            for acc in Account.objects.all():
+                acc.msg(self.caller.key + " made "+ word.upper() + "!")

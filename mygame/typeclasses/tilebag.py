@@ -11,6 +11,8 @@ class TileBag(Object):
         """
         Called when object is first created
         """
+        with open("CSW15.txt") as word_file:
+            self.db.csw15 = set(word.strip().lower() for word in word_file)
         self.db.centre = ""
         self.db.bagsize = 100
         self.db.tiledict = {'A' : 9,
