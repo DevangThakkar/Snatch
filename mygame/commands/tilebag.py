@@ -1,12 +1,14 @@
 import time
 import typeclasses
+from collections import Counter
 from evennia import create_object
 from evennia import Command as BaseCommand
-from typeclasses.tilebag import TileBag
-from evennia.utils import search
 from evennia import Command
 from evennia import DefaultObject
+from evennia.utils import search
+from typeclasses.tilebag import TileBag
 from typeclasses.accounts import Account
+from typeclasses.characters import Character
 
 class CmdStart(Command):
     """
@@ -29,6 +31,8 @@ class CmdStart(Command):
             acc.msg("New bag created by "+self.caller.key+"!")
             # acc.msg("Bag size: "+str(bag.check_bag_size()))
             # acc.msg(bag.db.tilestring)
+        for obj in Character.objects.all():    
+            obj.swap_typeclass(Character, run_start_hooks="at_object_creation")
         return bag
 
 class CmdCheck(Command):
@@ -158,20 +162,20 @@ class CmdDraw(Command):
                 self.msg("Not enough tiles left, number of tiles left is: "+str(bag.check_bag_size()))
                 return
             removed = ' '.join(bag.remove_tiles(int(num)))
-            bag.db.centre = str(bag.db.centre) + " " + removed # DB Centre reminds me of Nishit
+            bag.db.centre = str(bag.db.centre) + " " + removed # DB centre reminds me of Nishit
             for acc in Account.objects.all():
-                acc.msg("Tile(s) removed by "+self.caller.key+" are: " + removed)
+                acc.msg(self.caller.key+" removed " + removed)
                 # acc.msg(str(bag.check_bag_size())+" tiles left")
                 acc.msg("Tile(s) in the centre are: " + bag.db.centre)
             
-class make(Command):
+class CmdMake(Command):
     """
     Make words
 
     Usage:
         make <word>
 
-    The user can choose letters from the Centre and make a word if 
+    The user can choose letters from the centre and make a word if 
     it is allowed by CSW15. The letters are then removed and added
     to the person's collection.
     """
@@ -180,11 +184,41 @@ class make(Command):
     lock = "cmd:all()"
     help_category = "General"
 
-    def func(self, word):
+    def func(self):
         "implements the actual functionality"
-        if word.lower() not in search.objects('bag1')[0].db.csw15:
-            for acc in Account.objects.all():
-                acc.msg(self.caller.key + " attempted "+ word.upper() + " - which is not a word.")
-        else:
+
+        bag = search.objects('bag1')[0]
+        def exists(self, word):
+            "check for words from centre, then words from players"
+            if not Counter(word) - Counter(search.objects('bag1')[0].db.centre.replace(" ","").upper()):
+                return True
+
+        def update(self, centre, word):
+            "update the tiles in the centre after a word has been made"
+            for i in range(len(word)):
+                p = centre.index(word[i])
+                p1 = bytearray(centre)
+                del p1[p]
+                centre = str(p1)
+            centre = centre.replace(" ","")
+            temp_centre = ""
+            for i in range(len(centre)):
+                temp_centre = temp_centre + " " + centre[i]
+            return temp_centre
+
+        word = self.args.strip().rstrip()
+        if not search.objects('bag1'):
+            self.caller.msg("(Only you can see this)")
+            self.caller.msg("No tile bags exist. Create a bag using <start>")
+            return
+        if word.lower() in bag.db.csw15 and exists(self, word.upper()):
+            self.caller.db.words.append(word)
+            bag.db.centre = update(self, bag.db.centre, word.upper())
             for acc in Account.objects.all():
                 acc.msg(self.caller.key + " made "+ word.upper() + "!")
+                acc.msg("Tile(s) in the centre are: " + bag.db.centre)
+
+        else:
+            for acc in Account.objects.all():
+                acc.msg(self.caller.key + " attempted "+ word.upper() + " - which is not a word.")
+

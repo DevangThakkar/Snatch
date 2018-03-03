@@ -33,3 +33,7 @@ class Character(DefaultCharacter):
     def at_before_say(self, message, **kwargs):
         "Called before say, allows for tweaking message"
         return message.upper()
+
+    def at_object_creation(self):
+        "Called when object is first created"
+        self.db.words = []
