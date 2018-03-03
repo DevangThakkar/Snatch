@@ -1,6 +1,7 @@
 import time
 import typeclasses
 from collections import Counter
+from string import ascii_uppercase
 from evennia import create_object
 from evennia import Command as BaseCommand
 from evennia import Command
@@ -190,7 +191,7 @@ class CmdMake(Command):
         bag = search.objects('bag1')[0]
         def exists(self, word):
             "check for words from centre, then words from players"
-            if not Counter(word) - Counter(search.objects('bag1')[0].db.centre.replace(" ","").upper()):
+            if not Counter(word) - Counter(search.objects('bag1')[0].db.centre.replace(" ","")):
                 return True
 
         def update(self, centre, word):
@@ -206,19 +207,30 @@ class CmdMake(Command):
                 temp_centre = temp_centre + " " + centre[i]
             return temp_centre
 
-        word = self.args.strip().rstrip()
+        word = self.args.strip().rstrip().upper()
         if not search.objects('bag1'):
             self.caller.msg("(Only you can see this)")
             self.caller.msg("No tile bags exist. Create a bag using <start>")
             return
-        if word.lower() in bag.db.csw15 and exists(self, word.upper()):
-            self.caller.db.words.append(word)
-            bag.db.centre = update(self, bag.db.centre, word.upper())
-            for acc in Account.objects.all():
-                acc.msg(self.caller.key + " made "+ word.upper() + "!")
-                acc.msg("Tile(s) in the centre are: " + bag.db.centre)
-
+        if '?' not in word:
+            if word in bag.db.csw15 and exists(self, word):
+                self.caller.db.words.append(word)
+                bag.db.centre = update(self, bag.db.centre, word)
+                for acc in Account.objects.all():
+                    acc.msg(self.caller.key + " made "+ word + "!")
+                    acc.msg("Tile(s) in the centre are: " + bag.db.centre)
+            else:
+                for acc in Account.objects.all():
+                    acc.msg(self.caller.key + " attempted "+ word + " - which is not allowed.")
         else:
-            for acc in Account.objects.all():
-                acc.msg(self.caller.key + " attempted "+ word.upper() + " - which is not a word.")
-
+            if exists(self, word):
+                for i in ascii_uppercase:
+                    if word.replace("?",i in bag.db.csw15):
+                        bag.db.centre = update(self, bag.db.centre, word)
+                        for acc in Account.objects.all():
+                            acc.msg(self.caller.key + " made "+ word + "!")
+                            acc.msg("Tile(s) in the centre are: " + bag.db.centre)
+                        break
+            else:
+                for acc in Account.objects.all():
+                    acc.msg(self.caller.key + " attempted " + word + " - which is not allowed.")

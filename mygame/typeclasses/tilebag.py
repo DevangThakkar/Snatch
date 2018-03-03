@@ -12,9 +12,8 @@ class TileBag(Object):
         Called when object is first created
         """
         with open("./commands/CSW15.txt") as word_file:
-            self.db.csw15 = set(word.strip().lower() for word in word_file)
-        self.db.centre = ""
-        self.db.bagsize = 100
+            self.db.csw15 = set(word.strip().upper() for word in word_file)
+        self.db.centre = "" 
         self.db.tiledict = {'A' : 9,
         'B' : 2,
         'C' : 2,
@@ -41,8 +40,8 @@ class TileBag(Object):
         'X' : 1,
         'Y' : 2,
         'Z' : 1,
-        '?' : 2
-        }
+        '?' : 0
+        } #removing blanks from play; blanks make it very slow. Change here, in dict
         self.db.tilestring = list(''.join([L*self.db.tiledict[L] for L in string.ascii_uppercase+'?']))
 
     def reset_bag(self):
