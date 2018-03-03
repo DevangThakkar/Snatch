@@ -28,7 +28,7 @@ class CmdStart(Command):
     def func(self):
         "implements the actual functionality"
         bag = create_object("typeclasses.tilebag.TileBag", key="bag1")
-        for acc in Account.objects.all():
+        for acc in Character.objects.all():
             acc.msg("New bag created by "+self.caller.key+"!")
             # acc.msg("Bag size: "+str(bag.check_bag_size()))
             # acc.msg(bag.db.tilestring)
@@ -107,7 +107,7 @@ class CmdDelete(Command):
             self.caller.msg("No tile bags exist. Create a bag using <start>")
         else:
             bag_obj[len(bag_obj)-1].delete()
-            for acc in Account.objects.all():
+            for acc in Character.objects.all():
                 acc.msg("A tile bag was just killed because of "+self.caller.key+"'s whims.")
                 acc.msg("Number of bags left: "+str(len(bag_obj)-1))
 
@@ -149,7 +149,7 @@ class CmdDraw(Command):
                 return
             valid2 = int(num) <= 7 and int(num) >= 1
             if bag.check_bag_size() == 0:
-                for acc in Account.objects.all():
+                for acc in Character.objects.all():
                     acc.msg("Game over. The tile bag is now empty. Create a new bag using <start>")
                 bag.delete()
                 return
@@ -164,10 +164,14 @@ class CmdDraw(Command):
                 return
             removed = ' '.join(bag.remove_tiles(int(num)))
             bag.db.centre = str(bag.db.centre) + " " + removed # DB centre reminds me of Nishit
-            for acc in Account.objects.all():
+            for acc in Character.objects.all():
+                for word in acc.db.words:
+                    pass
+            for acc in Character.objects.all():
                 acc.msg(self.caller.key+" removed " + removed)
-                # acc.msg(str(bag.check_bag_size())+" tiles left")
                 acc.msg("Tile(s) in the centre are: " + bag.db.centre)
+                for acc1 in Character.objects.all():
+                    acc.msg(acc1.key + "'s words: " + acc1.db.words)
             
 class CmdMake(Command):
     """
@@ -214,23 +218,28 @@ class CmdMake(Command):
             return
         if '?' not in word:
             if word in bag.db.csw15 and exists(self, word):
-                self.caller.db.words.append(word)
+                self.caller.db.words += (word+" ")
                 bag.db.centre = update(self, bag.db.centre, word)
-                for acc in Account.objects.all():
+                for acc in Character.objects.all():
                     acc.msg(self.caller.key + " made "+ word + "!")
                     acc.msg("Tile(s) in the centre are: " + bag.db.centre)
+                    for acc1 in Character.objects.all():
+                        acc.msg(acc1.key + "'s words: " + acc1.db.words)
             else:
-                for acc in Account.objects.all():
+                for acc in Character.objects.all():
                     acc.msg(self.caller.key + " attempted "+ word + " - which is not allowed.")
         else:
             if exists(self, word):
                 for i in ascii_uppercase:
                     if word.replace("?",i in bag.db.csw15):
                         bag.db.centre = update(self, bag.db.centre, word)
-                        for acc in Account.objects.all():
+                        self.caller.db.words += (word+" ")
+                        for acc in Character.objects.all():
                             acc.msg(self.caller.key + " made "+ word + "!")
                             acc.msg("Tile(s) in the centre are: " + bag.db.centre)
+                            for acc1 in Character.objects.all():
+                                acc.msg(acc1.key + "'s words: " + acc1.db.words)
                         break
             else:
-                for acc in Account.objects.all():
+                for acc in Character.objects.all():
                     acc.msg(self.caller.key + " attempted " + word + " - which is not allowed.")

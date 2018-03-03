@@ -36,4 +36,4 @@ class Character(DefaultCharacter):
 
     def at_object_creation(self):
         "Called when object is first created"
-        self.db.words = []
+        self.db.words = ""
